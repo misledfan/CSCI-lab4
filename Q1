@@ -1,0 +1,69 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Function to process the file and count invalid float values
+int validateAndExtractFloats(const char *sourceFile, const char *resultFile);
+
+int main() {
+    const char *sourceFile = "data.txt";        // Input file
+    const char *resultFile = "valid_floats.txt"; // Output file
+
+    // Process the file and get the invalid float count
+    int invalidFloatCount = validateAndExtractFloats(sourceFile, resultFile);
+
+    if (invalidFloatCount >= 0) {
+        printf("\nFile processing completed successfully.");
+        printf("\nNumber of invalid float values found: %d", invalidFloatCount);
+    } else {
+        printf("\nAn error occurred during file processing.");
+    }
+
+    return 0;
+}
+
+int validateAndExtractFloats(const char *sourceFile, const char *resultFile) {
+    FILE *input = fopen(sourceFile, "r");
+    FILE *output = fopen(resultFile, "w");
+
+    // Check if files are successfully opened
+    if (input == NULL) {
+        perror("Error opening source file");
+        return -1;
+    }
+    if (output == NULL) {
+        perror("Error opening result file");
+        fclose(input);
+        return -1;
+    }
+
+    char token[256];          // Buffer for reading file tokens
+    int invalidCount = 0;     // Counter for invalid float values
+
+    // Read the file token by token
+    while (fscanf(input, "%255s", token) != EOF) {
+        char *conversionEnd;  // Pointer for strtof to indicate invalid part
+        float floatValue = strtof(token, &conversionEnd);
+
+        // Check if the conversion was successful (no invalid characters)
+        if (*conversionEnd == '\0') {
+            fprintf(output, "%f\n", floatValue);  // Write valid float to output file
+        } else {
+            invalidCount++;  // Increment invalid count for corrupted values
+        }
+    }
+
+    // Check for errors during file reading
+    if (ferror(input)) {
+        perror("Error reading source file");
+        fclose(input);
+        fclose(output);
+        return -1;
+    }
+
+    // Close the files
+    fclose(input);
+    fclose(output);
+
+    return invalidCount;  // Return the number of invalid float values
+}
